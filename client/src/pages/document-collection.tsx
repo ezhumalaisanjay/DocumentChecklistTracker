@@ -28,16 +28,12 @@ const applicantTypeLabels = {
   primary: "Primary Applicant",
   "co-applicant": "Co-Applicant", 
   guarantor: "Guarantor",
-  "self-employed": "Self-Employed",
-  corporate: "Corporate",
 };
 
 const applicantTypeIcons = {
   primary: User,
   "co-applicant": Users,
   guarantor: Shield,
-  "self-employed": Briefcase,
-  corporate: Building,
 };
 
 export default function DocumentCollection() {
@@ -150,7 +146,7 @@ export default function DocumentCollection() {
             <CardTitle>Select Applicant Type</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {applicantTypes.map((type) => {
                 const Icon = applicantTypeIcons[type];
                 const isSelected = selectedApplicantType === type;

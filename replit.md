@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a full-stack document collection system built with React, Express.js, and PostgreSQL. The application allows users to upload and manage documents for different types of applicants (primary, co-applicant, guarantor, self-employed, corporate) with specific document requirements for each type.
+This is a full-stack document collection system built with React, Express.js, and PostgreSQL. The application allows users to upload and manage documents for different types of applicants (primary, co-applicant, guarantor) with specific document requirements for each type.
 
 ## User Preferences
 

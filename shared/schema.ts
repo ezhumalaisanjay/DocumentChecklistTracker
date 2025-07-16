@@ -29,9 +29,7 @@ export type Document = typeof documents.$inferSelect;
 export const applicantTypes = [
   "primary",
   "co-applicant", 
-  "guarantor",
-  "self-employed",
-  "corporate"
+  "guarantor"
 ] as const;
 
 export type ApplicantType = typeof applicantTypes[number];
@@ -46,11 +44,6 @@ export const documentRequirements: Record<ApplicantType, Record<string, "require
     "Pay Stubs": "required",
     "Credit Report": "optional",
     "Reference Letters": "optional",
-    "1099 Forms": "na",
-    "Accountant Letter": "na",
-    "Business License": "na",
-    "Articles of Incorporation": "na",
-    "Corporate Resolution": "na",
   },
   "co-applicant": {
     "Photo ID": "required",
@@ -61,11 +54,6 @@ export const documentRequirements: Record<ApplicantType, Record<string, "require
     "Pay Stubs": "required",
     "Credit Report": "optional",
     "Reference Letters": "optional",
-    "1099 Forms": "na",
-    "Accountant Letter": "na",
-    "Business License": "na",
-    "Articles of Incorporation": "na",
-    "Corporate Resolution": "na",
   },
   guarantor: {
     "Photo ID": "required",
@@ -76,41 +64,6 @@ export const documentRequirements: Record<ApplicantType, Record<string, "require
     "Pay Stubs": "required",
     "Credit Report": "required",
     "Reference Letters": "optional",
-    "1099 Forms": "na",
-    "Accountant Letter": "na",
-    "Business License": "na",
-    "Articles of Incorporation": "na",
-    "Corporate Resolution": "na",
-  },
-  "self-employed": {
-    "Photo ID": "required",
-    "SSN Card": "required",
-    "Bank Statements": "required",
-    "Tax Returns": "required",
-    "Employment Letter": "required",
-    "Pay Stubs": "required",
-    "Credit Report": "optional",
-    "Reference Letters": "optional",
-    "1099 Forms": "required",
-    "Accountant Letter": "required",
-    "Business License": "required",
-    "Articles of Incorporation": "optional",
-    "Corporate Resolution": "na",
-  },
-  corporate: {
-    "Photo ID": "required",
-    "SSN Card": "required",
-    "Bank Statements": "required",
-    "Tax Returns": "required",
-    "Employment Letter": "required",
-    "Pay Stubs": "required",
-    "Credit Report": "optional",
-    "Reference Letters": "optional",
-    "1099 Forms": "na",
-    "Accountant Letter": "na",
-    "Business License": "required",
-    "Articles of Incorporation": "required",
-    "Corporate Resolution": "required",
   },
 };
 
@@ -123,11 +76,6 @@ export const documentDescriptions: Record<string, string> = {
   "Pay Stubs": "Last 3 months of pay stubs",
   "Credit Report": "Recent credit report from major bureau",
   "Reference Letters": "Professional or personal references",
-  "1099 Forms": "Independent contractor tax forms",
-  "Accountant Letter": "Letter from certified accountant",
-  "Business License": "Valid business license or permit",
-  "Articles of Incorporation": "Corporate formation documents",
-  "Corporate Resolution": "Board resolution authorizing transaction",
 };
 
 export const documentIcons: Record<string, string> = {
@@ -139,9 +87,4 @@ export const documentIcons: Record<string, string> = {
   "Pay Stubs": "money-check",
   "Credit Report": "chart-line",
   "Reference Letters": "envelope",
-  "1099 Forms": "file-contract",
-  "Accountant Letter": "calculator",
-  "Business License": "certificate",
-  "Articles of Incorporation": "building",
-  "Corporate Resolution": "gavel",
 };
