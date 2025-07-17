@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -20,6 +20,7 @@ import {
   Download 
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useUrlParams } from "@/hooks/use-url-params";
 
 const applicantTypeLabels = {
   primary: "Primary Applicant",
@@ -37,6 +38,26 @@ export default function DocumentCollectionDemo() {
   const [selectedApplicantType, setSelectedApplicantType] = useState<ApplicantType>("primary");
   const [documents] = useState<Document[]>([]); // Empty for demo
   const { toast } = useToast();
+  const { getBooleanParam } = useUrlParams();
+
+  // Get URL parameters to determine which applicant types to show
+  const showCoApplicant = getBooleanParam("Co-Applicant", true);
+  const showGuarantor = getBooleanParam("Guarantor", true);
+
+  // Filter available applicant types based on URL parameters
+  const availableApplicantTypes = useMemo(() => {
+    const types: ApplicantType[] = ["primary"];
+    
+    if (showCoApplicant) {
+      types.push("co-applicant");
+    }
+    
+    if (showGuarantor) {
+      types.push("guarantor");
+    }
+    
+    return types;
+  }, [showCoApplicant, showGuarantor]);
 
   const getRequiredDocuments = (applicantType: ApplicantType) => {
     const requirements = documentRequirements[applicantType];
@@ -125,6 +146,11 @@ export default function DocumentCollectionDemo() {
                 <h3 className="text-sm font-medium text-blue-900">Demo Mode</h3>
                 <p className="text-sm text-blue-700">
                   This is a demo version optimized for Netlify deployment. File uploads are simulated and no data is actually saved.
+                  {(!showCoApplicant || !showGuarantor) && (
+                    <span className="block mt-1">
+                      URL parameters: Co-Applicant={showCoApplicant ? 'enabled' : 'disabled'}, Guarantor={showGuarantor ? 'enabled' : 'disabled'}
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
@@ -132,33 +158,37 @@ export default function DocumentCollectionDemo() {
         </Card>
 
         {/* Applicant Type Selector */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Select Applicant Type</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {applicantTypes.map((type) => {
-                const Icon = applicantTypeIcons[type];
-                const isSelected = selectedApplicantType === type;
-                
-                return (
-                  <Button
-                    key={type}
-                    variant={isSelected ? "default" : "outline"}
-                    className={`p-4 h-auto ${
-                      isSelected ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"
-                    }`}
-                    onClick={() => setSelectedApplicantType(type)}
-                  >
-                    <Icon className="w-4 h-4 mr-2" />
-                    {applicantTypeLabels[type]}
-                  </Button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+        {availableApplicantTypes.length > 1 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Select Applicant Type</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={`grid grid-cols-1 gap-4 ${
+                availableApplicantTypes.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3'
+              }`}>
+                {availableApplicantTypes.map((type) => {
+                  const Icon = applicantTypeIcons[type];
+                  const isSelected = selectedApplicantType === type;
+                  
+                  return (
+                    <Button
+                      key={type}
+                      variant={isSelected ? "default" : "outline"}
+                      className={`p-4 h-auto ${
+                        isSelected ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"
+                      }`}
+                      onClick={() => setSelectedApplicantType(type)}
+                    >
+                      <Icon className="w-4 h-4 mr-2" />
+                      {applicantTypeLabels[type]}
+                    </Button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Document Checklist */}
         <Card>

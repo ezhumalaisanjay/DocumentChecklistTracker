@@ -96,6 +96,21 @@ When deployed to Netlify, the application automatically switches to demo mode wi
 - Mock progress tracking
 - Visual feedback without server persistence
 
+## URL Parameters
+
+The application supports URL parameters to control which applicant types are shown:
+
+- `?Co-Applicant=yes` - Show Co-Applicant section (default: yes)
+- `?Co-Applicant=no` - Hide Co-Applicant section
+- `?Guarantor=yes` - Show Guarantor section (default: yes)
+- `?Guarantor=no` - Hide Guarantor section
+
+### Example URLs:
+- `https://yourapp.netlify.app/` - Show all applicant types
+- `https://yourapp.netlify.app/?Co-Applicant=no` - Hide Co-Applicant section
+- `https://yourapp.netlify.app/?Co-Applicant=yes&Guarantor=no` - Show Co-Applicant, hide Guarantor
+- `https://yourapp.netlify.app/?ID=app_123&Co-Applicant=yes&Guarantor=no` - With application ID and selective sections
+
 ## Contributing
 
 1. Fork the repository

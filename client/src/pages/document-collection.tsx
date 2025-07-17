@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,13 +16,12 @@ import {
   User, 
   Users, 
   Shield, 
-  Briefcase, 
-  Building, 
   Save, 
   Send, 
   Download 
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useUrlParams } from "@/hooks/use-url-params";
 
 const applicantTypeLabels = {
   primary: "Primary Applicant",
@@ -39,6 +38,26 @@ const applicantTypeIcons = {
 export default function DocumentCollection() {
   const [selectedApplicantType, setSelectedApplicantType] = useState<ApplicantType>("primary");
   const { toast } = useToast();
+  const { getBooleanParam } = useUrlParams();
+
+  // Get URL parameters to determine which applicant types to show
+  const showCoApplicant = getBooleanParam("Co-Applicant", true);
+  const showGuarantor = getBooleanParam("Guarantor", true);
+
+  // Filter available applicant types based on URL parameters
+  const availableApplicantTypes = useMemo(() => {
+    const types: ApplicantType[] = ["primary"];
+    
+    if (showCoApplicant) {
+      types.push("co-applicant");
+    }
+    
+    if (showGuarantor) {
+      types.push("guarantor");
+    }
+    
+    return types;
+  }, [showCoApplicant, showGuarantor]);
 
   const { data: documents = [], isLoading } = useQuery<Document[]>({
     queryKey: ["/api/documents", selectedApplicantType],
@@ -141,33 +160,37 @@ export default function DocumentCollection() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Applicant Type Selector */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Select Applicant Type</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {applicantTypes.map((type) => {
-                const Icon = applicantTypeIcons[type];
-                const isSelected = selectedApplicantType === type;
-                
-                return (
-                  <Button
-                    key={type}
-                    variant={isSelected ? "default" : "outline"}
-                    className={`p-4 h-auto ${
-                      isSelected ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"
-                    }`}
-                    onClick={() => setSelectedApplicantType(type)}
-                  >
-                    <Icon className="w-4 h-4 mr-2" />
-                    {applicantTypeLabels[type]}
-                  </Button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+        {availableApplicantTypes.length > 1 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Select Applicant Type</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={`grid grid-cols-1 gap-4 ${
+                availableApplicantTypes.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3'
+              }`}>
+                {availableApplicantTypes.map((type) => {
+                  const Icon = applicantTypeIcons[type];
+                  const isSelected = selectedApplicantType === type;
+                  
+                  return (
+                    <Button
+                      key={type}
+                      variant={isSelected ? "default" : "outline"}
+                      className={`p-4 h-auto ${
+                        isSelected ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700"
+                      }`}
+                      onClick={() => setSelectedApplicantType(type)}
+                    >
+                      <Icon className="w-4 h-4 mr-2" />
+                      {applicantTypeLabels[type]}
+                    </Button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Document Checklist */}
         <Card>

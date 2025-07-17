@@ -125,6 +125,14 @@ Preferred communication style: Simple, everyday language.
 - **Publish Directory**: `dist/public`
 - **Demo Mode**: Automatic detection for Netlify deployment with simulated file uploads
 - **Configuration**: `netlify.toml` with proper redirects and build settings
+- **URL Parameters**: Support for Co-Applicant and Guarantor visibility control via query parameters
 - **Status**: Successfully configured and tested for Git-based deployment
+
+### URL Parameter System (January 2025)
+- **Co-Applicant Control**: ?Co-Applicant=yes/no to show/hide Co-Applicant section
+- **Guarantor Control**: ?Guarantor=yes/no to show/hide Guarantor section
+- **Default Behavior**: Both sections visible by default
+- **Responsive Layout**: Automatically adjusts grid layout based on visible sections
+- **Status**: Fully implemented in both demo and production modes
 
 The system now supports both local development with full backend functionality and Netlify deployment with demo mode for static hosting and serverless functions.
