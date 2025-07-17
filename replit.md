@@ -97,23 +97,34 @@ Preferred communication style: Simple, everyday language.
 
 ### Build Process
 - **Frontend**: Vite builds optimized static assets to `dist/public`
-- **Backend**: esbuild bundles server code to `dist/index.js`
+- **Backend**: esbuild bundles server code to `dist/index.js` (local development)
+- **Netlify Functions**: esbuild bundles serverless functions to `dist/functions/`
 - **Database**: Drizzle pushes schema changes to PostgreSQL
 
 ### Environment Configuration
-- **Database**: CONNECTION_URL environment variable required
+- **Database**: CONNECTION_URL environment variable required for full functionality
 - **Development**: NODE_ENV=development for development mode
 - **Production**: NODE_ENV=production for optimized builds
+- **Netlify**: Automatic demo mode detection for serverless deployment
 
 ### Server Setup
-- **Static Files**: Express serves built frontend from `dist/public`
-- **API Routes**: RESTful endpoints under `/api` prefix
+- **Local Development**: Express serves built frontend from `dist/public`
+- **Netlify Deployment**: Static files served from `dist/public` with serverless functions
+- **API Routes**: RESTful endpoints under `/api` prefix (local) or `/.netlify/functions/` (Netlify)
 - **Error Handling**: Global error middleware for consistent error responses
 - **Logging**: Request logging for API endpoints with response details
 
 ### Storage Strategy
 - **Current**: In-memory storage class for development/testing
 - **Production Ready**: Database storage with Base64 encoded files
+- **Netlify Demo**: Local state management with simulated uploads
 - **Scalability**: Easy to extend to cloud storage (S3, etc.) by implementing IStorage interface
 
-The system is designed for easy deployment on platforms like Replit, with proper environment variable management and build scripts for both development and production environments.
+### Netlify Deployment (January 2025)
+- **Build Command**: `./build-netlify.sh`
+- **Publish Directory**: `dist/public`
+- **Functions**: Serverless functions in `dist/functions/`
+- **Demo Mode**: Automatic detection for Netlify deployment with simulated file uploads
+- **Configuration**: `netlify.toml` with proper redirects and build settings
+
+The system now supports both local development with full backend functionality and Netlify deployment with demo mode for static hosting and serverless functions.
