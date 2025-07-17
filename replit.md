@@ -121,10 +121,10 @@ Preferred communication style: Simple, everyday language.
 - **Scalability**: Easy to extend to cloud storage (S3, etc.) by implementing IStorage interface
 
 ### Netlify Deployment (January 2025)
-- **Build Command**: `./build-netlify.sh`
+- **Build Command**: `vite build` (configured in netlify.toml)
 - **Publish Directory**: `dist/public`
-- **Functions**: Serverless functions in `dist/functions/`
 - **Demo Mode**: Automatic detection for Netlify deployment with simulated file uploads
 - **Configuration**: `netlify.toml` with proper redirects and build settings
+- **Status**: Successfully configured and tested for Git-based deployment
 
 The system now supports both local development with full backend functionality and Netlify deployment with demo mode for static hosting and serverless functions.

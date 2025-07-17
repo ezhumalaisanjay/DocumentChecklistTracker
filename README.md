@@ -39,17 +39,17 @@ A full-stack document collection interface for financial applications with appli
 
 1. Build the project:
    ```bash
-   ./build-netlify.sh
+   npm run build
    ```
 
-2. Deploy the `dist` folder to Netlify
+2. Deploy the `dist/public` folder to Netlify
 
-### Option 2: Git-based Deployment
+### Option 2: Git-based Deployment (Recommended)
 
 1. Push your code to a Git repository
 2. Connect your repository to Netlify
-3. Configure build settings:
-   - Build command: `./build-netlify.sh`
+3. Netlify will automatically use the settings from `netlify.toml`:
+   - Build command: `vite build`
    - Publish directory: `dist/public`
 
 The `netlify.toml` file is already configured with the necessary settings.
