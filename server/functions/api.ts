@@ -30,8 +30,13 @@ const handler: Handler = async (event, context) => {
   }
 
   try {
-    // Extract path segments
-    const pathSegments = path.split('/').filter(Boolean);
+    // Extract path segments - handle both direct function calls and redirects
+    let pathSegments = path.split('/').filter(Boolean);
+    
+    // If the path starts with the function name, remove it
+    if (pathSegments[0] === 'api') {
+      pathSegments = pathSegments.slice(1);
+    }
     
     // Monday.com API endpoints
     if (pathSegments[0] === 'monday') {
@@ -46,7 +51,7 @@ const handler: Handler = async (event, context) => {
     return {
       statusCode: 404,
       headers: corsHeaders,
-      body: JSON.stringify({ message: 'Not found' }),
+      body: JSON.stringify({ message: 'Not found', path: path, segments: pathSegments }),
     };
     
   } catch (error) {
