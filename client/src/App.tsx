@@ -8,12 +8,13 @@ import DocumentCollectionDemo from "@/pages/document-collection-demo";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  // Use demo version for Netlify deployment
+  // Use demo version for Netlify deployment or when explicitly set
   const isNetlifyDeploy = import.meta.env.PROD && !import.meta.env.VITE_API_URL;
+  const useDemo = import.meta.env.VITE_USE_DEMO === 'true' || isNetlifyDeploy;
   
   return (
     <Switch>
-      <Route path="/" component={isNetlifyDeploy ? DocumentCollectionDemo : DocumentCollection} />
+      <Route path="/" component={useDemo ? DocumentCollectionDemo : DocumentCollection} />
       <Route component={NotFound} />
     </Switch>
   );

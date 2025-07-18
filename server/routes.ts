@@ -23,6 +23,54 @@ const upload = multer({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Monday.com API integration - Debug columns endpoint
+  app.get("/api/monday/columns", async (req, res) => {
+    try {
+      const myToken = "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjUzOTcyMTg4NCwiYWFpIjoxMSwidWlkIjo3ODE3NzU4NCwiaWFkIjoiMjAyNS0wNy0xNlQxMjowMDowOC4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6NTUxNjQ0NSwicmduIjoidXNlMSJ9.s43_kjRmv-QaZ92LYdRlEvrq9CYqxKhh3XXpR-8nhKU";
+      const mondayApiClient = new ApiClient({ token: myToken });
+
+      const query = `
+        query {
+          boards(ids: 9602025981) {
+            columns {
+              id
+              title
+              type
+            }
+            items_page {
+              items {
+                id
+                name
+                column_values {
+                  id
+                  title
+                  text
+                  type
+                }
+                subitems {
+                  id
+                  name
+                  column_values {
+                    id
+                    title
+                    text
+                    type
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      const response = await mondayApiClient.request(query);
+      res.json(response);
+    } catch (error) {
+      console.error("Error fetching Monday.com columns:", error);
+      res.status(500).json({ message: "Failed to fetch Monday.com columns" });
+    }
+  });
+
   // Monday.com API integration - Raw response for debugging
   app.get("/api/monday/raw", async (req, res) => {
     try {
@@ -215,13 +263,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return (item.subitems || []).filter((subitem: any) => {
             const status = subitem.column_values.find((cv: any) => cv.id === "status")?.text;
             return status === targetStatus;
-          }).map((subitem: any) => ({
-            ...subitem,
-            parentItemName: item.name,
-            parentItemId: item.id,
-            // Get the Applicant type from the color_mksyqx5h column
-            applicantType: subitem.column_values.find((cv: any) => cv.id === "color_mksyqx5h")?.text || "Primary Applicant"
-          }));
+          }).map((subitem: any) => {
+            // Get the Applicant type from the color_mksyqx5h column, or try to infer from other columns
+            let applicantType = subitem.column_values.find((cv: any) => cv.id === "color_mksyqx5h")?.text;
+            
+            // If no color column found, try to infer from the subitem name or other properties
+            if (!applicantType) {
+              // Default to "Primary Applicant" if we can't determine
+              applicantType = "Primary Applicant";
+            }
+            
+            // Map "Applicant" to "Primary Applicant" for consistency
+            if (applicantType === "Applicant") {
+              applicantType = "Primary Applicant";
+            }
+            
+            return {
+              ...subitem,
+              parentItemName: item.name,
+              parentItemId: item.id,
+              applicantType: applicantType
+            };
+          });
         }
         return [];
       });
@@ -237,7 +300,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const applicantType = subitem.applicantType;
         let sectionName = "Required Documents - Primary Applicant"; // default
 
-        if (applicantType === "Co-Applicant") {
+        // Map "Applicant" to "Primary Applicant" for consistency
+        if (applicantType === "Applicant" || applicantType === "Primary Applicant") {
+          sectionName = "Required Documents - Primary Applicant";
+        } else if (applicantType === "Co-Applicant") {
           sectionName = "Required Documents - Co-Applicant";
         } else if (applicantType === "Guarantor") {
           sectionName = "Required Documents - Guarantor";
@@ -249,7 +315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: subitem.column_values.find((cv: any) => cv.id === "status")?.text,
           parentItemName: subitem.parentItemName,
           parentItemId: subitem.parentItemId,
-          applicantType: subitem.applicantType
+          applicantType: applicantType === "Applicant" ? "Primary Applicant" : applicantType
         });
       });
 

@@ -1,5 +1,17 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+// Get the base URL for API requests
+const getBaseUrl = () => {
+  // In development, use the current origin (same as the frontend)
+  if (import.meta.env.DEV) {
+    return '';
+  }
+  // In production on Netlify, use relative paths since API is on same domain
+  return '';
+};
+
+const baseUrl = getBaseUrl();
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -12,7 +24,8 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  const fullUrl = `${baseUrl}${url}`;
+  const res = await fetch(fullUrl, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
@@ -28,7 +41,8 @@ export async function apiRequestFormData(
   url: string,
   formData: FormData,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  const fullUrl = `${baseUrl}${url}`;
+  const res = await fetch(fullUrl, {
     method,
     body: formData,
     credentials: "include",
@@ -44,7 +58,8 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
+    const fullUrl = `${baseUrl}${queryKey.join("/")}`;
+    const res = await fetch(fullUrl, {
       credentials: "include",
     });
 
@@ -61,12 +76,12 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
-      retry: false,
+      refetchOnWindowFocus: true,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
     },
     mutations: {
-      retry: false,
+      retry: 1,
     },
   },
 });
