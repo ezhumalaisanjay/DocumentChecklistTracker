@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, X, Eye, Clock } from "lucide-react";
+import { Upload, X, Eye, Clock, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -9,6 +9,15 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Document } from "@shared/schema";
 
+interface MondayDocument {
+  id: string;
+  name: string;
+  status: string;
+  parentItemName: string;
+  parentItemId: string;
+  applicantType: string;
+}
+
 interface DocumentUploadProps {
   applicantType: string;
   documentType: string;
@@ -16,6 +25,7 @@ interface DocumentUploadProps {
   icon: string;
   status: "required" | "optional" | "na";
   uploadedDocument?: Document;
+  mondayDocument?: MondayDocument;
 }
 
 export function DocumentUpload({
@@ -25,6 +35,7 @@ export function DocumentUpload({
   icon,
   status,
   uploadedDocument,
+  mondayDocument,
 }: DocumentUploadProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -115,6 +126,16 @@ export function DocumentUpload({
       );
     }
     
+    // Show Monday.com missing status if available
+    if (mondayDocument && mondayDocument.status === "Missing") {
+      return (
+        <Badge variant="destructive" className="bg-red-100 text-red-800">
+          <AlertCircle className="w-3 h-3 mr-1" />
+          Missing (Monday.com)
+        </Badge>
+      );
+    }
+    
     return status === "required" ? (
       <Badge variant="destructive" className="bg-red-100 text-red-800">
         <i className="fas fa-exclamation-circle mr-1"></i>
@@ -152,6 +173,7 @@ export function DocumentUpload({
     <Card className={`p-4 transition-all duration-200 hover:shadow-md ${
       uploadedDocument ? 
         uploadedDocument.status === "processing" ? "border-yellow-200 bg-yellow-50" : "border-green-200 bg-green-50"
+        : mondayDocument && mondayDocument.status === "Missing" ? "border-red-200 bg-red-50"
         : "border-gray-200"
     }`}>
       <div className="flex items-start justify-between mb-3">
@@ -159,11 +181,17 @@ export function DocumentUpload({
           <i className={`fas fa-${icon} ${
             uploadedDocument ? 
               uploadedDocument.status === "processing" ? "text-yellow-600" : "text-green-600"
+              : mondayDocument && mondayDocument.status === "Missing" ? "text-red-600"
               : "text-gray-400"
           } mr-3`}></i>
           <div>
             <h3 className="font-medium text-gray-900">{documentType}</h3>
             <p className="text-sm text-gray-600">{description}</p>
+            {mondayDocument && (
+              <p className="text-xs text-gray-500 mt-1">
+                From Monday.com: {mondayDocument.parentItemName}
+              </p>
+            )}
           </div>
         </div>
         {getStatusBadge()}
@@ -204,7 +232,6 @@ export function DocumentUpload({
                     size="sm"
                     onClick={handleDelete}
                     className="text-red-600 hover:text-red-800"
-                    disabled={deleteMutation.isPending}
                   >
                     <X className="w-4 h-4" />
                   </Button>
@@ -216,24 +243,30 @@ export function DocumentUpload({
       ) : (
         <div
           {...getRootProps()}
-          className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors duration-200 ${
-            isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-500"
+          className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+            isDragActive
+              ? "border-blue-400 bg-blue-50"
+              : mondayDocument && mondayDocument.status === "Missing"
+              ? "border-red-300 bg-red-50"
+              : "border-gray-300 hover:border-gray-400"
           }`}
         >
           <input {...getInputProps()} />
-          <Upload className="mx-auto h-8 w-8 text-gray-400 mb-3" />
-          <p className="text-sm text-gray-600 mb-2">
-            Drag and drop your file here, or{" "}
-            <span className="text-blue-600 font-medium">browse</span>
+          <Upload className={`mx-auto h-8 w-8 mb-2 ${
+            isDragActive ? "text-blue-600" : 
+            mondayDocument && mondayDocument.status === "Missing" ? "text-red-600" :
+            "text-gray-400"
+          }`} />
+          <p className="text-sm text-gray-600">
+            {isDragActive
+              ? "Drop the file here"
+              : mondayDocument && mondayDocument.status === "Missing"
+              ? `Upload ${documentType} (Missing from Monday.com)`
+              : `Upload ${documentType}`}
           </p>
-          <p className="text-xs text-gray-500">PDF, JPG, PNG up to 10MB</p>
-          
-          {uploadMutation.isPending && (
-            <div className="mt-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="text-sm text-gray-600 mt-2">Uploading...</p>
-            </div>
-          )}
+          <p className="text-xs text-gray-500 mt-1">
+            PDF, JPG, or PNG up to 10MB
+          </p>
         </div>
       )}
     </Card>

@@ -2,13 +2,23 @@ import { DocumentUpload } from "./document-upload";
 import { documentRequirements, documentDescriptions, documentIcons, type ApplicantType } from "@shared/schema";
 import type { Document } from "@shared/schema";
 
+interface MondayDocument {
+  id: string;
+  name: string;
+  status: string;
+  parentItemName: string;
+  parentItemId: string;
+  applicantType: string;
+}
+
 interface DocumentItemProps {
   applicantType: ApplicantType;
   documentType: string;
   documents: Document[];
+  mondayDocument?: MondayDocument;
 }
 
-export function DocumentItem({ applicantType, documentType, documents }: DocumentItemProps) {
+export function DocumentItem({ applicantType, documentType, documents, mondayDocument }: DocumentItemProps) {
   const status = documentRequirements[applicantType][documentType];
   const description = documentDescriptions[documentType];
   const icon = documentIcons[documentType];
@@ -27,6 +37,7 @@ export function DocumentItem({ applicantType, documentType, documents }: Documen
       icon={icon}
       status={status}
       uploadedDocument={uploadedDocument}
+      mondayDocument={mondayDocument}
     />
   );
 }

@@ -35,14 +35,32 @@ const applicantTypeIcons = {
   guarantor: Shield,
 };
 
+interface MondayDocument {
+  id: string;
+  name: string;
+  status: string;
+  parentItemName: string;
+  parentItemId: string;
+  applicantType: string;
+}
+
+interface GroupedMondayDocuments {
+  "Required Documents - Primary Applicant": MondayDocument[];
+  "Required Documents - Co-Applicant": MondayDocument[];
+  "Required Documents - Guarantor": MondayDocument[];
+}
+
 export default function DocumentCollection() {
   const [selectedApplicantType, setSelectedApplicantType] = useState<ApplicantType>("primary");
   const { toast } = useToast();
-  const { getBooleanParam } = useUrlParams();
+  const { getBooleanParam, getStringParam } = useUrlParams();
 
   // Get URL parameters to determine which applicant types to show
   const showCoApplicant = getBooleanParam("Co-Applicant", true);
   const showGuarantor = getBooleanParam("Guarantor", true);
+  
+  // Get applicant ID from URL parameters
+  const applicantId = getStringParam("ID", "app_1752674377597_3uzu2eefu");
 
   // Filter available applicant types based on URL parameters
   const availableApplicantTypes = useMemo(() => {
@@ -63,18 +81,41 @@ export default function DocumentCollection() {
     queryKey: ["/api/documents", selectedApplicantType],
   });
 
-  const getRequiredDocuments = (applicantType: ApplicantType) => {
+  // Fetch Monday.com missing documents
+  const { data: mondayDocuments = {
+    "Required Documents - Primary Applicant": [],
+    "Required Documents - Co-Applicant": [],
+    "Required Documents - Guarantor": []
+  } } = useQuery<GroupedMondayDocuments>({
+    queryKey: ["/api/monday/documents", applicantId],
+  });
+
+  // Get Monday.com documents for the selected applicant type
+  const getMondayDocumentsForType = (applicantType: ApplicantType): MondayDocument[] => {
+    const sectionKey = `Required Documents - ${applicantTypeLabels[applicantType]}` as keyof GroupedMondayDocuments;
+    return mondayDocuments[sectionKey] || [];
+  };
+
+  // Merge Monday.com documents with existing requirements
+  const getMergedRequiredDocuments = (applicantType: ApplicantType) => {
     const requirements = documentRequirements[applicantType];
-    return Object.entries(requirements).filter(([_, status]) => status === "required");
+    const mondayDocs = getMondayDocumentsForType(applicantType);
+    
+    // Only show Monday.com missing documents, hide all other documents
+    const mondayRequired = mondayDocs
+      .filter(doc => doc.status === "Missing")
+      .map(doc => [doc.name, "required"] as [string, string]);
+    
+    return mondayRequired;
   };
 
   const getOptionalDocuments = (applicantType: ApplicantType) => {
-    const requirements = documentRequirements[applicantType];
-    return Object.entries(requirements).filter(([_, status]) => status === "optional");
+    // Only show Monday.com missing documents, hide all optional documents
+    return [];
   };
 
   const calculateProgress = () => {
-    const requiredDocs = getRequiredDocuments(selectedApplicantType);
+    const requiredDocs = getMergedRequiredDocuments(selectedApplicantType);
     const uploadedRequiredDocs = requiredDocs.filter(([docType]) => 
       documents.some(doc => doc.documentType === docType)
     );
@@ -84,15 +125,19 @@ export default function DocumentCollection() {
   };
 
   const getTotalDocuments = () => {
-    const requirements = documentRequirements[selectedApplicantType];
-    return Object.values(requirements).filter(status => status !== "na").length;
+    const mondayDocs = getMondayDocumentsForType(selectedApplicantType);
+    return mondayDocs.filter(doc => doc.status === "Missing").length;
   };
 
   const getCompletedDocuments = () => {
-    const requirements = documentRequirements[selectedApplicantType];
-    return Object.keys(requirements).filter(docType => 
-      requirements[docType] !== "na" && documents.some(doc => doc.documentType === docType)
+    const mondayDocs = getMondayDocumentsForType(selectedApplicantType);
+    const missingDocs = mondayDocs.filter(doc => doc.status === "Missing");
+    
+    const mondayCompleted = missingDocs.filter(doc => 
+      documents.some(uploadedDoc => uploadedDoc.documentType === doc.name)
     ).length;
+    
+    return mondayCompleted;
   };
 
   const handleSave = () => {
@@ -103,7 +148,7 @@ export default function DocumentCollection() {
   };
 
   const handleSubmit = () => {
-    const requiredDocs = getRequiredDocuments(selectedApplicantType);
+    const requiredDocs = getMergedRequiredDocuments(selectedApplicantType);
     const uploadedRequiredDocs = requiredDocs.filter(([docType]) => 
       documents.some(doc => doc.documentType === docType)
     );
@@ -195,9 +240,16 @@ export default function DocumentCollection() {
         {/* Document Checklist */}
         <Card>
           <CardHeader>
-            <CardTitle>Required Documents - {applicantTypeLabels[selectedApplicantType]}</CardTitle>
+            <CardTitle>Missing Documents from Monday.com - {applicantTypeLabels[selectedApplicantType]}</CardTitle>
             <p className="text-sm text-gray-600">
-              Upload all required documents to complete your application
+              Upload missing documents from Monday.com to complete your application
+              {getMondayDocumentsForType(selectedApplicantType).filter(doc => doc.status === "Missing").length > 0 && (
+                <span className="ml-2">
+                  • <Badge variant="destructive" className="text-xs">
+                    {getMondayDocumentsForType(selectedApplicantType).filter(doc => doc.status === "Missing").length} missing documents
+                  </Badge>
+                </span>
+              )}
             </p>
           </CardHeader>
           <CardContent>
@@ -213,25 +265,32 @@ export default function DocumentCollection() {
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Required Documents */}
-                {getRequiredDocuments(selectedApplicantType).map(([docType]) => (
-                  <DocumentItem
-                    key={docType}
-                    applicantType={selectedApplicantType}
-                    documentType={docType}
-                    documents={documents}
-                  />
-                ))}
+                {/* Monday.com Missing Documents Only */}
+                {getMergedRequiredDocuments(selectedApplicantType).map(([docType]) => {
+                  const mondayDoc = getMondayDocumentsForType(selectedApplicantType).find(doc => doc.name === docType);
+                  return (
+                    <DocumentItem
+                      key={docType}
+                      applicantType={selectedApplicantType}
+                      documentType={docType}
+                      documents={documents}
+                      mondayDocument={mondayDoc}
+                    />
+                  );
+                })}
                 
-                {/* Optional Documents */}
-                {getOptionalDocuments(selectedApplicantType).map(([docType]) => (
-                  <DocumentItem
-                    key={docType}
-                    applicantType={selectedApplicantType}
-                    documentType={docType}
-                    documents={documents}
-                  />
-                ))}
+                {/* Show message if no missing documents */}
+                {getMergedRequiredDocuments(selectedApplicantType).length === 0 && (
+                  <div className="col-span-2 text-center py-8">
+                    <div className="text-gray-500">
+                      <i className="fas fa-check-circle text-4xl mb-4 text-green-500"></i>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No Missing Documents</h3>
+                      <p className="text-sm text-gray-600">
+                        All documents from Monday.com are up to date for {applicantTypeLabels[selectedApplicantType]}.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
