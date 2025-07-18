@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, apiRequestFormData } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Document } from "@shared/schema";
 
@@ -26,6 +26,7 @@ interface DocumentUploadProps {
   status: "required" | "optional" | "na";
   uploadedDocument?: Document;
   mondayDocument?: MondayDocument;
+  referenceId?: string;
 }
 
 export function DocumentUpload({
@@ -36,6 +37,7 @@ export function DocumentUpload({
   status,
   uploadedDocument,
   mondayDocument,
+  referenceId,
 }: DocumentUploadProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -46,15 +48,18 @@ export function DocumentUpload({
       formData.append("file", file);
       formData.append("applicantType", applicantType);
       formData.append("documentType", documentType);
+      if (referenceId) {
+        formData.append("referenceId", referenceId);
+      }
       
-      const response = await apiRequest("POST", "/api/documents", formData);
+      const response = await apiRequestFormData("POST", "/api/documents", formData);
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/documents", applicantType] });
       toast({
         title: "Document uploaded successfully",
-        description: `${documentType} has been uploaded.`,
+        description: `${documentType} has been uploaded and sent to processing.`,
       });
     },
     onError: (error) => {
@@ -239,6 +244,16 @@ export function DocumentUpload({
               )}
             </div>
           </div>
+        </div>
+      ) : uploadMutation.isPending ? (
+        <div className="border-2 border-dashed rounded-lg p-6 text-center transition-colors border-blue-300 bg-blue-50">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <p className="text-sm text-blue-600 font-medium">
+            Uploading {documentType}...
+          </p>
+          <p className="text-xs text-blue-500 mt-1">
+            Please wait while we process your file
+          </p>
         </div>
       ) : (
         <div

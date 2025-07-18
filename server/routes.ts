@@ -279,7 +279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      const { applicantType, documentType } = req.body;
+      const { applicantType, documentType, referenceId } = req.body;
       
       if (!applicantType || !documentType) {
         return res.status(400).json({ message: "Applicant type and document type are required" });
@@ -298,6 +298,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertDocumentSchema.parse(documentData);
       const document = await storage.createDocument(validatedData);
+      
+      // Send file to webhook immediately
+      try {
+        const webhookPayload = {
+          reference_id: referenceId || "default",
+          file_name: req.file.originalname,
+          section_name: documentType,
+          file_base64: fileData
+        };
+
+        console.log(`Sending file to webhook: ${req.file.originalname} (${req.file.size} bytes)`);
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+        
+        const webhookResponse = await fetch('https://hook.us1.make.com/2vu8udpshhdhjkoks8gchub16wjp7cu3', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(webhookPayload),
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
+
+        if (!webhookResponse.ok) {
+          console.error('Webhook failed:', webhookResponse.status, webhookResponse.statusText);
+          console.error('Webhook response:', await webhookResponse.text());
+        } else {
+          console.log('File sent to webhook successfully');
+          const responseText = await webhookResponse.text();
+          if (responseText) {
+            console.log('Webhook response:', responseText);
+          }
+        }
+      } catch (webhookError) {
+        console.error('Error sending to webhook:', webhookError);
+        // Don't fail the upload if webhook fails
+      }
       
       res.status(201).json(document);
     } catch (error) {

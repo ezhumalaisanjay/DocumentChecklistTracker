@@ -275,6 +275,7 @@ export default function DocumentCollection() {
                       documentType={docType}
                       documents={documents}
                       mondayDocument={mondayDoc}
+                      referenceId={applicantId}
                     />
                   );
                 })}
