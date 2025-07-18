@@ -6,6 +6,42 @@ import multer from "multer";
 import { z } from "zod";
 import { ApiClient } from "@mondaydotcomorg/api";
 
+// Webhook function to send document upload notification
+async function sendWebhookNotification(documentName: string, applicationId: string, documentType: string) {
+  const webhookUrl = process.env.MONDAY_WEBHOOK_URL;
+  
+  if (!webhookUrl) {
+    console.log('No webhook URL configured, skipping webhook notification');
+    return;
+  }
+
+  try {
+    const webhookData = {
+      documentName,
+      applicationId,
+      documentType,
+      uploadedAt: new Date().toISOString(),
+      status: 'uploaded'
+    };
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(webhookData),
+    });
+
+    if (!response.ok) {
+      console.error('Webhook notification failed:', response.status, response.statusText);
+    } else {
+      console.log('Webhook notification sent successfully');
+    }
+  } catch (error) {
+    console.error('Error sending webhook notification:', error);
+  }
+}
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -339,72 +375,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload document
-  app.post("/api/documents", upload.single('file'), async (req, res) => {
+  app.post("/api/documents", async (req, res) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({ message: "No file uploaded" });
+      if (!req.body) {
+        return res.status(400).json({ message: "No body provided" });
       }
 
-      const { applicantType, documentType, referenceId } = req.body;
-      
-      if (!applicantType || !documentType) {
-        return res.status(400).json({ message: "Applicant type and document type are required" });
-      }
-
-      const fileData = req.file.buffer.toString('base64');
-      
-      const documentData = {
-        applicantType,
-        documentType,
-        fileName: req.file.originalname,
-        fileSize: req.file.size,
-        mimeType: req.file.mimetype,
-        fileData,
-      };
-
-      const validatedData = insertDocumentSchema.parse(documentData);
-      const document = await storage.createDocument(validatedData);
-      
-      // Send file to webhook immediately
+      let uploadData;
       try {
-        const webhookPayload = {
-          reference_id: referenceId || "default",
-          file_name: req.file.originalname,
-          section_name: documentType,
-          file_base64: fileData
-        };
-
-        console.log(`Sending file to webhook: ${req.file.originalname} (${req.file.size} bytes)`);
-        
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-        
-        const webhookResponse = await fetch('https://hook.us1.make.com/2vu8udpshhdhjkoks8gchub16wjp7cu3', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(webhookPayload),
-          signal: controller.signal,
-        });
-        
-        clearTimeout(timeoutId);
-
-        if (!webhookResponse.ok) {
-          console.error('Webhook failed:', webhookResponse.status, webhookResponse.statusText);
-          console.error('Webhook response:', await webhookResponse.text());
-        } else {
-          console.log('File sent to webhook successfully');
-          const responseText = await webhookResponse.text();
-          if (responseText) {
-            console.log('Webhook response:', responseText);
-          }
-        }
-      } catch (webhookError) {
-        console.error('Error sending to webhook:', webhookError);
-        // Don't fail the upload if webhook fails
+        uploadData = req.body;
+      } catch (error) {
+        return res.status(400).json({ message: "Invalid JSON body" });
       }
-      
+
+      // Validate the upload data
+      const validationResult = insertDocumentSchema.safeParse(uploadData);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid upload data", 
+          errors: validationResult.error.errors 
+        });
+      }
+
+      // Create the document
+      const document = await storage.createDocument(validationResult.data);
+
+      // Send webhook notification with document name and application ID
+      const applicationId = uploadData.referenceId || 'unknown';
+      await sendWebhookNotification(
+        document.fileName,
+        applicationId,
+        document.documentType
+      );
+
       res.status(201).json(document);
     } catch (error) {
       if (error instanceof z.ZodError) {

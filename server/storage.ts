@@ -35,6 +35,7 @@ export class MemStorage implements IStorage {
       status: "uploaded",
       uploadedAt: new Date(),
       fileData: insertDocument.fileData || null,
+      referenceId: insertDocument.referenceId || null,
     };
     this.documents.set(id, document);
     return document;
