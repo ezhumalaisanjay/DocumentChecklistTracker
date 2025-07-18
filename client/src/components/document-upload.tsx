@@ -9,14 +9,7 @@ import { apiRequest, apiRequestFormData } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Document } from "@shared/schema";
 
-interface MondayDocument {
-  id: string;
-  name: string;
-  status: string;
-  parentItemName: string;
-  parentItemId: string;
-  applicantType: string;
-}
+
 
 interface DocumentUploadProps {
   applicantType: string;
@@ -25,7 +18,6 @@ interface DocumentUploadProps {
   icon: string;
   status: "required" | "optional" | "na";
   uploadedDocument?: Document;
-  mondayDocument?: MondayDocument;
   referenceId?: string;
 }
 
@@ -36,7 +28,6 @@ export function DocumentUpload({
   icon,
   status,
   uploadedDocument,
-  mondayDocument,
   referenceId,
 }: DocumentUploadProps) {
   const { toast } = useToast();
@@ -146,15 +137,7 @@ export function DocumentUpload({
       );
     }
     
-    // Show Monday.com missing status if available
-    if (mondayDocument && mondayDocument.status === "Missing") {
-      return (
-        <Badge variant="destructive" className="bg-red-100 text-red-800">
-          <AlertCircle className="w-3 h-3 mr-1" />
-          Missing (Monday.com)
-        </Badge>
-      );
-    }
+
     
     return status === "required" ? (
       <Badge variant="destructive" className="bg-red-100 text-red-800">
@@ -193,7 +176,6 @@ export function DocumentUpload({
     <Card className={`p-4 transition-all duration-200 hover:shadow-md ${
       uploadedDocument ? 
         uploadedDocument.status === "processing" ? "border-yellow-200 bg-yellow-50" : "border-green-200 bg-green-50"
-        : mondayDocument && mondayDocument.status === "Missing" ? "border-red-200 bg-red-50"
         : "border-gray-200"
     }`}>
       <div className="flex items-start justify-between mb-3">
@@ -201,17 +183,11 @@ export function DocumentUpload({
           <i className={`fas fa-${icon} ${
             uploadedDocument ? 
               uploadedDocument.status === "processing" ? "text-yellow-600" : "text-green-600"
-              : mondayDocument && mondayDocument.status === "Missing" ? "text-red-600"
               : "text-gray-400"
           } mr-3`}></i>
           <div>
             <h3 className="font-medium text-gray-900">{documentType}</h3>
             <p className="text-sm text-gray-600">{description}</p>
-            {mondayDocument && (
-              <p className="text-xs text-gray-500 mt-1">
-                From Monday.com: {mondayDocument.parentItemName}
-              </p>
-            )}
           </div>
         </div>
         {getStatusBadge()}
@@ -276,23 +252,15 @@ export function DocumentUpload({
           className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
             isDragActive
               ? "border-blue-400 bg-blue-50"
-              : mondayDocument && mondayDocument.status === "Missing"
-              ? "border-red-300 bg-red-50"
               : "border-gray-300 hover:border-gray-400"
           }`}
         >
           <input {...getInputProps()} />
           <Upload className={`mx-auto h-8 w-8 mb-2 ${
-            isDragActive ? "text-blue-600" : 
-            mondayDocument && mondayDocument.status === "Missing" ? "text-red-600" :
-            "text-gray-400"
+            isDragActive ? "text-blue-600" : "text-gray-400"
           }`} />
           <p className="text-sm text-gray-600">
-            {isDragActive
-              ? "Drop the file here"
-              : mondayDocument && mondayDocument.status === "Missing"
-              ? `Upload ${documentType} (Missing from Monday.com)`
-              : `Upload ${documentType}`}
+            {isDragActive ? "Drop the file here" : `Upload ${documentType}`}
           </p>
           <p className="text-xs text-gray-500 mt-1">
             PDF, JPG, or PNG up to 10MB

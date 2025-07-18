@@ -90,28 +90,21 @@ export default function DocumentCollection() {
     queryKey: ["/api/monday/documents", applicantId],
   });
 
-  // Get Monday.com documents for the selected applicant type
-  const getMondayDocumentsForType = (applicantType: ApplicantType): MondayDocument[] => {
-    const sectionKey = `Required Documents - ${applicantTypeLabels[applicantType]}` as keyof GroupedMondayDocuments;
-    return mondayDocuments[sectionKey] || [];
-  };
-
-  // Merge Monday.com documents with existing requirements
+  // Get documents for the selected applicant type
   const getMergedRequiredDocuments = (applicantType: ApplicantType) => {
     const requirements = documentRequirements[applicantType];
-    const mondayDocs = getMondayDocumentsForType(applicantType);
     
-    // Only show Monday.com missing documents, hide all other documents
-    const mondayRequired = mondayDocs
-      .filter(doc => doc.status === "Missing")
-      .map(doc => [doc.name, "required"] as [string, string]);
-    
-    return mondayRequired;
+    // Show all required documents
+    return Object.entries(requirements)
+      .filter(([_, status]) => status === "required")
+      .map(([docType, _]) => [docType, "required"] as [string, string]);
   };
 
   const getOptionalDocuments = (applicantType: ApplicantType) => {
-    // Only show Monday.com missing documents, hide all optional documents
-    return [];
+    const requirements = documentRequirements[applicantType];
+    return Object.entries(requirements)
+      .filter(([_, status]) => status === "optional")
+      .map(([docType, _]) => [docType, "optional"] as [string, string]);
   };
 
   const calculateProgress = () => {
@@ -125,19 +118,17 @@ export default function DocumentCollection() {
   };
 
   const getTotalDocuments = () => {
-    const mondayDocs = getMondayDocumentsForType(selectedApplicantType);
-    return mondayDocs.filter(doc => doc.status === "Missing").length;
+    const requiredDocs = getMergedRequiredDocuments(selectedApplicantType);
+    return requiredDocs.length;
   };
 
   const getCompletedDocuments = () => {
-    const mondayDocs = getMondayDocumentsForType(selectedApplicantType);
-    const missingDocs = mondayDocs.filter(doc => doc.status === "Missing");
-    
-    const mondayCompleted = missingDocs.filter(doc => 
-      documents.some(uploadedDoc => uploadedDoc.documentType === doc.name)
+    const requiredDocs = getMergedRequiredDocuments(selectedApplicantType);
+    const completed = requiredDocs.filter(([docType]) => 
+      documents.some(uploadedDoc => uploadedDoc.documentType === docType)
     ).length;
     
-    return mondayCompleted;
+    return completed;
   };
 
   const handleSave = () => {
@@ -253,16 +244,14 @@ export default function DocumentCollection() {
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Monday.com Missing Documents Only */}
+                {/* Required Documents */}
                 {getMergedRequiredDocuments(selectedApplicantType).map(([docType]) => {
-                  const mondayDoc = getMondayDocumentsForType(selectedApplicantType).find(doc => doc.name === docType);
                   return (
                     <DocumentItem
                       key={docType}
                       applicantType={selectedApplicantType}
                       documentType={docType}
                       documents={documents}
-                      mondayDocument={mondayDoc}
                       referenceId={applicantId}
                     />
                   );
