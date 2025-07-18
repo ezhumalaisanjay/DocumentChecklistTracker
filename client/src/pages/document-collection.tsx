@@ -192,12 +192,7 @@ export default function DocumentCollection() {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-600">
-                <span>{completedDocs}</span> of <span>{totalDocs}</span> documents completed
-              </div>
-              <div className="w-32">
-                <Progress value={progress} className="h-2" />
-              </div>
+              {/* Progress indicator hidden */}
             </div>
           </div>
         </div>
@@ -240,16 +235,9 @@ export default function DocumentCollection() {
         {/* Document Checklist */}
         <Card>
           <CardHeader>
-            <CardTitle>Missing Documents from Monday.com - {applicantTypeLabels[selectedApplicantType]}</CardTitle>
+            <CardTitle>Pending Documents - {applicantTypeLabels[selectedApplicantType]}</CardTitle>
             <p className="text-sm text-gray-600">
-              Upload missing documents from Monday.com to complete your application
-              {getMondayDocumentsForType(selectedApplicantType).filter(doc => doc.status === "Missing").length > 0 && (
-                <span className="ml-2">
-                  • <Badge variant="destructive" className="text-xs">
-                    {getMondayDocumentsForType(selectedApplicantType).filter(doc => doc.status === "Missing").length} missing documents
-                  </Badge>
-                </span>
-              )}
+              Upload pending documents to complete your application
             </p>
           </CardHeader>
           <CardContent>
