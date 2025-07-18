@@ -285,34 +285,7 @@ export default function DocumentCollection() {
           </CardContent>
         </Card>
 
-        {/* Action Bar */}
-        <Card className="mt-8">
-          <CardContent className="pt-6">
-            <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-              <div className="flex items-center text-sm text-gray-600">
-                <Save className="w-4 h-4 mr-2" />
-                <span>Auto-save enabled</span>
-              </div>
-              
-              <div className="flex items-center space-x-4">
-                <Button variant="outline" onClick={handleExport}>
-                  <Download className="w-4 h-4 mr-2" />
-                  Export Package
-                </Button>
-                
-                <Button variant="outline" onClick={handleSave}>
-                  <Save className="w-4 h-4 mr-2" />
-                  Save Progress
-                </Button>
-                
-                <Button onClick={handleSubmit}>
-                  <Send className="w-4 h-4 mr-2" />
-                  Submit Application
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Action Bar hidden */}
       </div>
     </div>
   );
