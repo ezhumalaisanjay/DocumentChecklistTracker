@@ -8,9 +8,9 @@ import DocumentCollectionDemo from "@/pages/document-collection-demo";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  // Use demo version for Netlify deployment or when explicitly set
-  const isNetlifyDeploy = import.meta.env.PROD && !import.meta.env.VITE_API_URL;
-  const useDemo = import.meta.env.VITE_USE_DEMO === 'true' || isNetlifyDeploy;
+  // Use demo version only when explicitly set
+  // Since we now have full API functionality on Netlify, use the full version by default
+  const useDemo = import.meta.env.VITE_USE_DEMO === 'true';
   
   return (
     <Switch>

@@ -44,15 +44,30 @@ export function DocumentUpload({
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("applicantType", applicantType);
-      formData.append("documentType", documentType);
-      if (referenceId) {
-        formData.append("referenceId", referenceId);
-      }
+      // Convert file to base64 for Netlify functions
+      const fileData = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Remove the data URL prefix (e.g., "data:application/pdf;base64,")
+          const base64 = result.split(',')[1];
+          resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const uploadData = {
+        applicantType,
+        documentType,
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type,
+        fileData,
+        referenceId,
+      };
       
-      const response = await apiRequestFormData("POST", "/api/documents", formData);
+      const response = await apiRequest("POST", "/api/documents", uploadData);
       return response.json();
     },
     onSuccess: () => {
