@@ -12,7 +12,6 @@ export const documents = pgTable("documents", {
   status: varchar("status", { length: 20 }).notNull().default("uploaded"),
   uploadedAt: timestamp("uploaded_at").defaultNow(),
   fileData: text("file_data"), // Base64 encoded file data for in-memory storage
-  referenceId: varchar("reference_id", { length: 100 }), // Application ID for webhook notifications
 });
 
 export const insertDocumentSchema = createInsertSchema(documents).pick({
@@ -22,7 +21,6 @@ export const insertDocumentSchema = createInsertSchema(documents).pick({
   fileSize: true,
   mimeType: true,
   fileData: true,
-  referenceId: true,
 });
 
 export type InsertDocument = z.infer<typeof insertDocumentSchema>;

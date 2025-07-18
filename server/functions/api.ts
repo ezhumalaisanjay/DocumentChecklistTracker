@@ -321,12 +321,14 @@ async function handleDocumentEndpoints(pathSegments: string[], httpMethod: strin
       try {
         const webhookPayload = {
           reference_id: referenceId || "default",
+          application_id: referenceId || "default", // Application ID for webhook
+          document_name: fileName, // Document name for webhook
           file_name: fileName,
           section_name: documentType,
           file_base64: fileData
         };
 
-        console.log(`Sending file to webhook: ${fileName} (${fileSize} bytes)`);
+        console.log(`Sending file to webhook: ${fileName} (${fileSize} bytes) for application ID: ${referenceId}`);
         
         const webhookResponse = await fetch(WEBHOOK_URL, {
           method: 'POST',

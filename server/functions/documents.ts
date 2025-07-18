@@ -3,42 +3,6 @@ import { storage } from '../storage';
 import { insertDocumentSchema } from '../../shared/schema';
 import { z } from 'zod';
 
-// Webhook function to send document upload notification
-async function sendWebhookNotification(documentName: string, applicationId: string, documentType: string) {
-  const webhookUrl = process.env.MONDAY_WEBHOOK_URL;
-  
-  if (!webhookUrl) {
-    console.log('No webhook URL configured, skipping webhook notification');
-    return;
-  }
-
-  try {
-    const webhookData = {
-      documentName,
-      applicationId,
-      documentType,
-      uploadedAt: new Date().toISOString(),
-      status: 'uploaded'
-    };
-
-    const response = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(webhookData),
-    });
-
-    if (!response.ok) {
-      console.error('Webhook notification failed:', response.status, response.statusText);
-    } else {
-      console.log('Webhook notification sent successfully');
-    }
-  } catch (error) {
-    console.error('Error sending webhook notification:', error);
-  }
-}
-
 const handler: Handler = async (event, context) => {
   const { httpMethod, path, body, headers } = event;
   
@@ -115,45 +79,22 @@ const handler: Handler = async (event, context) => {
         };
       }
 
-      let uploadData;
-      try {
-        uploadData = JSON.parse(body);
-      } catch (error) {
+      // Parse multipart form data (simplified for demo)
+      const contentType = headers['content-type'] || '';
+      if (!contentType.includes('multipart/form-data')) {
         return {
           statusCode: 400,
           headers: corsHeaders,
-          body: JSON.stringify({ message: 'Invalid JSON body' }),
+          body: JSON.stringify({ message: 'Content-Type must be multipart/form-data' }),
         };
       }
 
-      // Validate the upload data
-      const validationResult = insertDocumentSchema.safeParse(uploadData);
-      if (!validationResult.success) {
-        return {
-          statusCode: 400,
-          headers: corsHeaders,
-          body: JSON.stringify({ 
-            message: 'Invalid upload data', 
-            errors: validationResult.error.errors 
-          }),
-        };
-      }
-
-      // Create the document
-      const document = await storage.createDocument(validationResult.data);
-
-      // Send webhook notification with document name and application ID
-      const applicationId = uploadData.referenceId || 'unknown';
-      await sendWebhookNotification(
-        document.fileName,
-        applicationId,
-        document.documentType
-      );
-
+      // For Netlify Functions, we need to handle file uploads differently
+      // This is a simplified version - in production, you'd need proper multipart parsing
       return {
-        statusCode: 201,
+        statusCode: 501,
         headers: corsHeaders,
-        body: JSON.stringify(document),
+        body: JSON.stringify({ message: 'File upload not implemented for serverless functions' }),
       };
     }
     

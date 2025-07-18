@@ -15,10 +15,11 @@ interface DocumentItemProps {
   applicantType: ApplicantType;
   documentType: string;
   documents: Document[];
+  mondayDocument?: MondayDocument;
   referenceId?: string;
 }
 
-export function DocumentItem({ applicantType, documentType, documents, referenceId }: DocumentItemProps) {
+export function DocumentItem({ applicantType, documentType, documents, mondayDocument, referenceId }: DocumentItemProps) {
   const status = documentRequirements[applicantType][documentType];
   const description = documentDescriptions[documentType];
   const icon = documentIcons[documentType];
@@ -37,6 +38,7 @@ export function DocumentItem({ applicantType, documentType, documents, reference
       icon={icon}
       status={status}
       uploadedDocument={uploadedDocument}
+      mondayDocument={mondayDocument}
       referenceId={referenceId}
     />
   );
